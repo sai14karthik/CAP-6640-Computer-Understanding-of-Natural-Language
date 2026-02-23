@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aggregate experiment results from results/*.json and print summary table.
+Aggregate benchmark results: list per-run JSONs and/or summary.json.
 Run from project root: python scripts/analyze_results.py [--results_dir results]
 """
 import argparse

@@ -60,8 +60,8 @@ def generate_answer(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-    if hasattr(model, "device"):
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    device = next(model.parameters()).device
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     gen_cfg = {
         "max_new_tokens": max_new_tokens,
         "do_sample": do_sample,

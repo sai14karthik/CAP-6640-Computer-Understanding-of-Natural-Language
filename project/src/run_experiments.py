@@ -1,5 +1,12 @@
 """
-Main script: run hallucination detection experiments across models and datasets.
+Main script: benchmark models on QA datasets and record results.
+
+For each (model × dataset) we:
+  1. Load the dataset and model
+  2. Run the model on each question (zero-shot or few-shot)
+  3. Compare predictions to references and compute metrics
+  4. Save per-run JSON (metrics + metadata) and aggregate summary.json
+
 Usage:
   python -m src.run_experiments --models phi-2 --datasets truthfulqa --max_samples 50
   python -m src.run_experiments --all --max_samples 100
@@ -34,7 +41,7 @@ def run_single_experiment(
     output_dir: str = RESULTS_DIR,
     verbose: bool = True,
 ) -> dict:
-    """Run one model on one dataset and save results."""
+    """Benchmark one model on one dataset: run inference, compute metrics, save results."""
     if verbose:
         print(f"\n{'='*60}")
         print(f"Model: {model_key} | Dataset: {dataset_name} | n={max_samples}" + (" [CPU]" if force_cpu else ""))
@@ -120,8 +127,8 @@ def main():
             try:
                 # Per-dataset max when --full: use config max for this dataset
                 n = max_samples
-                if n is None and dataset_name in DATASETS_CONFIG:
-                    n = DATASETS_CONFIG[dataset_name].get("max_samples", 500)
+                if n is None:
+                    n = DATASETS_CONFIG.get(dataset_name, {}).get("max_samples", 500)
                 res = run_single_experiment(
                     model_key=model_key,
                     dataset_name=dataset_name,
@@ -136,12 +143,23 @@ def main():
                 print(f"Error {model_key} x {dataset_name}: {e}")
                 all_results.append({"model": model_key, "dataset": dataset_name, "error": str(e)})
 
-    # Summary
+    # Summary: full benchmark record (all metrics per model × dataset)
     summary_path = os.path.join(args.output_dir, "summary.json")
-    save_json(
-        [{"model": r.get("model"), "dataset": r.get("dataset"), "accuracy_contain": r.get("accuracy_contain"), "hallucination_rate": r.get("hallucination_rate"), "error": r.get("error")} for r in all_results],
-        summary_path,
-    )
+    summary = []
+    for r in all_results:
+        summary.append({
+            "model": r.get("model"),
+            "dataset": r.get("dataset"),
+            "prompt_type": r.get("prompt_type"),
+            "num_samples": r.get("num_samples"),
+            "accuracy_contain": r.get("accuracy_contain"),
+            "accuracy_exact": r.get("accuracy_exact"),
+            "precision": r.get("precision"),
+            "recall": r.get("recall"),
+            "hallucination_rate": r.get("hallucination_rate"),
+            "error": r.get("error"),
+        })
+    save_json(summary, summary_path)
     print(f"\nSummary saved to {summary_path}")
 
 

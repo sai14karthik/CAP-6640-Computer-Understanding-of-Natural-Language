@@ -3,9 +3,8 @@ Load and preprocess factual QA datasets for hallucination evaluation.
 """
 
 from typing import List, Dict, Any, Optional
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 from .config import DATASETS
-from .utils import normalize_answer
 
 
 def _get_answer_text(item: Any, key: str, dataset_name: str) -> str:
@@ -28,19 +27,35 @@ def _get_answer_text(item: Any, key: str, dataset_name: str) -> str:
     return str(val).strip()
 
 
-def load_truthfulqa(max_samples: Optional[int] = 500) -> List[Dict[str, str]]:
-    """Load TruthfulQA (generation config)."""
+def load_truthfulqa(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
+    """Load TruthfulQA (generation config). Uses all correct_answers for matching."""
     ds = load_dataset("truthful_qa", "generation", split="validation", trust_remote_code=True)
     rows = []
     for i, item in enumerate(ds):
         if max_samples and i >= max_samples:
             break
         q = item.get("question", "")
-        # best_answer or correct_answers
-        ans = item.get("best_answer") or (item.get("correct_answers") or [""])[0]
-        if isinstance(ans, list):
-            ans = ans[0] if ans else ""
-        rows.append({"question": q, "answer": ans, "dataset": "truthfulqa"})
+        best = item.get("best_answer")
+        correct_list = item.get("correct_answers") or []
+        if isinstance(correct_list, str):
+            correct_list = [correct_list]
+        # Normalize: list of acceptable answers (use best_answer as primary, add all correct_answers)
+        all_answers = []
+        if best:
+            all_answers.append(best.strip() if isinstance(best, str) else str(best).strip())
+        for a in correct_list:
+            if isinstance(a, str) and a.strip() and a.strip() not in all_answers:
+                all_answers.append(a.strip())
+            elif isinstance(a, list) and a:
+                all_answers.append(str(a[0]).strip())
+        if not all_answers:
+            all_answers = [""]
+        rows.append({
+            "question": q,
+            "answer": all_answers[0],
+            "correct_answers": all_answers,
+            "dataset": "truthfulqa",
+        })
     return rows
 
 
