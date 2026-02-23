@@ -1,1 +1,11 @@
-*.pdf.venv/
+*.pdf
+.venv/
+
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+
+# Mac
+.DS_Store
