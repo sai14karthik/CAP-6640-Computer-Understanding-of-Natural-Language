@@ -1,14 +1,9 @@
-"""
-Load and preprocess factual QA datasets for hallucination evaluation.
-"""
-
 from typing import Any, Dict, List, Optional
 from datasets import load_dataset
 from .config import DATASETS
 
 
 def _get_answer_text(item: Any, key: str, dataset_name: str) -> str:
-    """Extract answer text from dataset-specific format."""
     val = item.get(key)
     if val is None:
         return ""
@@ -17,7 +12,6 @@ def _get_answer_text(item: Any, key: str, dataset_name: str) -> str:
     if isinstance(val, list):
         if not val:
             return ""
-        # SQuAD: list of dicts with 'text'
         if isinstance(val[0], dict) and "text" in val[0]:
             return val[0]["text"].strip()
         if isinstance(val[0], str):
@@ -28,7 +22,6 @@ def _get_answer_text(item: Any, key: str, dataset_name: str) -> str:
 
 
 def load_truthfulqa(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
-    """Load TruthfulQA (generation config). Uses all correct_answers for matching."""
     ds = load_dataset("truthful_qa", "generation", split="validation", trust_remote_code=True)
     rows = []
     for i, item in enumerate(ds):
@@ -39,7 +32,6 @@ def load_truthfulqa(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
         correct_list = item.get("correct_answers") or []
         if isinstance(correct_list, str):
             correct_list = [correct_list]
-        # Normalize: list of acceptable answers (use best_answer as primary, add all correct_answers)
         all_answers = []
         if best:
             all_answers.append(best.strip() if isinstance(best, str) else str(best).strip())
@@ -60,7 +52,6 @@ def load_truthfulqa(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
 
 
 def load_wiki_qa(max_samples: Optional[int] = 500) -> List[Dict[str, str]]:
-    """Load WikiQA."""
     ds = load_dataset("wiki_qa", split="test", trust_remote_code=True)
     rows = []
     seen_questions = set()
@@ -86,7 +77,6 @@ def _natural_questions_question_text(item: Dict[str, Any]) -> str:
 
 
 def _natural_questions_short_answer_texts(item: Dict[str, Any]) -> List[str]:
-    """Collect short answer strings from NQ annotations."""
     ann = item.get("annotations") or {}
     sa = ann.get("short_answers")
     texts: List[str] = []
@@ -106,9 +96,6 @@ def _natural_questions_short_answer_texts(item: Dict[str, Any]) -> List[str]:
 
 
 def load_natural_questions(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
-    """
-    Natural Questions via streaming (avoids downloading hundreds of shards for a small subset).
-    """
     n = max_samples if max_samples is not None else 500
     ds = load_dataset("natural_questions", split="train", streaming=True, trust_remote_code=True)
     rows: List[Dict[str, Any]] = []
@@ -129,7 +116,6 @@ def load_natural_questions(max_samples: Optional[int] = 500) -> List[Dict[str, A
 
 
 def load_fever(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
-    """FEVER labelled claims: reference is the veracity label (SUPPORTS / REFUTES / NOT ENOUGH INFO)."""
     ds = load_dataset("fever", "v1.0", split="labelled_dev", trust_remote_code=True)
     rows: List[Dict[str, Any]] = []
     for i, item in enumerate(ds):
@@ -151,7 +137,6 @@ def load_fever(max_samples: Optional[int] = 500) -> List[Dict[str, Any]]:
 
 
 def load_squad_v2(max_samples: Optional[int] = 500) -> List[Dict[str, str]]:
-    """Load SQuAD 2.0 (with unanswerable questions)."""
     ds = load_dataset("squad_v2", split="validation", trust_remote_code=True)
     rows = []
     for i, item in enumerate(ds):
@@ -162,13 +147,12 @@ def load_squad_v2(max_samples: Optional[int] = 500) -> List[Dict[str, str]]:
         if answers and answers.get("text"):
             ans = answers["text"][0]
         else:
-            ans = ""  # unanswerable
+            ans = ""
         rows.append({"question": q, "answer": ans, "dataset": "squad_v2", "context": item.get("context", "")})
     return rows
 
 
 def load_dataset_by_name(name: str, max_samples: Optional[int] = None) -> List[Dict[str, str]]:
-    """Load a dataset by config name."""
     cfg = DATASETS.get(name)
     if not cfg:
         raise ValueError(f"Unknown dataset: {name}. Choose from {list(DATASETS.keys())}")
@@ -185,7 +169,6 @@ def load_dataset_by_name(name: str, max_samples: Optional[int] = None) -> List[D
     if name == "fever":
         return load_fever(n)
 
-    # Generic load for others
     hf_id = cfg["hf_id"]
     config = cfg.get("config")
     q_key = cfg["question_key"]
@@ -212,5 +195,4 @@ def load_dataset_by_name(name: str, max_samples: Optional[int] = None) -> List[D
 
 
 def get_all_dataset_names() -> List[str]:
-    """Return list of configured dataset names."""
     return list(DATASETS.keys())
