@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""
-Aggregate benchmark results: list per-run JSONs and/or summary.json.
-Run from project root: python scripts/analyze_results.py [--results_dir results]
-"""
 import argparse
 import json
-import os
 from pathlib import Path
 
 def main():
@@ -53,7 +48,6 @@ def main():
             print(",".join(str(r.get(k, "")) for k in ["model", "dataset", "prompt_type", "accuracy_contain", "accuracy_exact", "f1", "precision", "recall", "hallucination_rate", "num_samples"]))
         return
 
-    # Table
     print("\nHallucination Detection - Results Summary")
     print("=" * 80)
     for r in rows:
