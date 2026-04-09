@@ -3,7 +3,8 @@
 
 # Core
 transformers>=4.35.0
-datasets>=2.14.0
+# Pin to 2.x: Hugging Face script datasets (e.g. FEVER, natural_questions) are not supported on datasets 4.x
+datasets>=2.14.0,<3.0.0
 torch>=2.0.0
 accelerate>=0.24.0
 bitsandbytes>=0.41.0

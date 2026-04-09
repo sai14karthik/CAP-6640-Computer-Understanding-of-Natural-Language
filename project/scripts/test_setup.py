@@ -13,7 +13,7 @@ from src.load_datasets import load_dataset_by_name, get_all_dataset_names
 def main():
     print("Config: Datasets =", list(DATASETS.keys()))
     print("Config: Models =", list(MODELS.keys()))
-    for name in ["truthfulqa", "wiki_qa", "squad_v2"]:
+    for name in ["truthfulqa", "wiki_qa", "natural_questions", "fever", "squad_v2"]:
         if name not in get_all_dataset_names():
             continue
         try:

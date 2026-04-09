@@ -81,6 +81,8 @@ def run_single_experiment(
     )
     if verbose:
         print(f"Accuracy (contain): {results['accuracy_contain']:.4f}")
+        print(f"Accuracy (exact):   {results['accuracy_exact']:.4f}")
+        print(f"F1 (token):         {results.get('f1', 0.0):.4f}")
         print(f"Hallucination rate: {results['hallucination_rate']:.4f}")
         print(f"Saved to {out_path}")
     return results
@@ -154,6 +156,7 @@ def main():
             "num_samples": r.get("num_samples"),
             "accuracy_contain": r.get("accuracy_contain"),
             "accuracy_exact": r.get("accuracy_exact"),
+            "f1": r.get("f1"),
             "precision": r.get("precision"),
             "recall": r.get("recall"),
             "hallucination_rate": r.get("hallucination_rate"),

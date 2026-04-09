@@ -35,7 +35,6 @@ project/
 │   └── analyze_results.py # Aggregate results table/CSV
 ├── requirements.txt
 ├── run.py               # Entry point
-├── PROJECT_STATUS.md    # Proposal vs implementation checklist
 └── README.md
 ```
 
@@ -115,12 +114,13 @@ Runs both `gpt2` and `distilgpt2` on all 5 datasets at full size (500 samples ea
 ## Datasets and Models (5 + 5)
 
 - **5 Datasets:** TruthfulQA, WikiQA, Natural Questions, FEVER, SQuAD 2.0 (see `PROJECT_DATASETS` in `src/config.py`).
-- **5 Models:** Phi-2, Mistral 7B, Llama 2 7B, Gemma 7B, Qwen 7B (see `PROJECT_MODELS` in `src/config.py`). GPU recommended; for CPU-only use `--cpu` with small models (gpt2, distilgpt2).
+- **5 Models:** GPT-2, Phi-2, Mistral 7B, Llama 2 7B, Qwen 7B (see `PROJECT_MODELS` in `src/config.py`). GPU recommended; for CPU-only use `--cpu` with small models (gpt2, distilgpt2).
 
 ## Metrics
 
 - **Accuracy (contain):** Fraction of answers that contain the ground-truth answer (normalized).
 - **Accuracy (exact):** Exact match after normalization.
+- **F1 (token):** Mean token-overlap F1 against the best matching reference (SQuAD-style).
 - **Precision / Recall:** For single-answer QA, both equal accuracy (correct vs incorrect).
 - **Hallucination rate:** 1 − accuracy (contain).
 

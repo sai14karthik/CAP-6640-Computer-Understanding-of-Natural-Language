@@ -26,11 +26,13 @@ def load_model_and_tokenizer(
 
     on_cpu = force_cpu or not torch.cuda.is_available()
     kwargs = {}
+    # 8-bit loaders (bitsandbytes) are for large checkpoints; small LMs often fail or gain nothing.
+    small_lm = model_key in ("gpt2", "distilgpt2")
     if on_cpu:
         kwargs["device_map"] = None
         kwargs["torch_dtype"] = torch.float32
     else:
-        if use_8bit:
+        if use_8bit and not small_lm:
             kwargs["load_in_8bit"] = True
             kwargs["device_map"] = device_map
         else:

@@ -2,8 +2,9 @@
 Evaluation metrics and experiment runner for hallucination detection.
 """
 
-from typing import List, Dict, Any, Optional
-from .utils import exact_match, contains_answer, contains_any_answer, normalize_answer
+from typing import Any, Dict, List, Optional
+
+from .utils import exact_match, contains_any_answer, max_f1_over_refs
 from .config import ZERO_SHOT_TEMPLATE, FEW_SHOT_TEMPLATE, GENERATION_CONFIG
 from .load_models import generate_answer
 
@@ -89,6 +90,27 @@ def compute_hallucination_rate(
     return 1.0 - acc
 
 
+def compute_mean_f1(
+    predictions: List[str],
+    references: List[Any],
+    refs_per_item: Optional[List[List[str]]] = None,
+) -> float:
+    """Mean token-level F1, taking the best F1 over acceptable references per item."""
+    if not predictions or not references:
+        return 0.0
+    n = min(len(predictions), len(references))
+    total = 0.0
+    counted = 0
+    for i in range(n):
+        pred = (predictions[i] or "").strip()
+        ref_list = _get_ref_list_for_index(i, references, refs_per_item)
+        if not ref_list:
+            continue
+        total += max_f1_over_refs(pred, ref_list)
+        counted += 1
+    return total / counted if counted else 0.0
+
+
 def compute_precision_recall(
     predictions: List[str],
     references: List[Any],
@@ -168,6 +190,7 @@ def run_evaluation(
 
     acc_contain = compute_accuracy(predictions, references, match="contain", refs_per_item=refs_per_item)
     acc_exact = compute_accuracy(predictions, references, match="exact", refs_per_item=refs_per_item)
+    mean_f1 = compute_mean_f1(predictions, references, refs_per_item=refs_per_item)
     hall_rate = 1.0 - acc_contain
     precision, recall = compute_precision_recall(predictions, references, match="contain", refs_per_item=refs_per_item)
     # Sanity: one prediction per question => precision = recall = accuracy_contain
@@ -176,6 +199,7 @@ def run_evaluation(
     return {
         "accuracy_contain": acc_contain,
         "accuracy_exact": acc_exact,
+        "f1": mean_f1,
         "precision": precision,
         "recall": recall,
         "hallucination_rate": hall_rate,

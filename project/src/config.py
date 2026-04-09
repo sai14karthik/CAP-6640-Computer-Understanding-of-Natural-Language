@@ -20,8 +20,10 @@ DATASETS = {
         "answer_key": "answer",
     },
     "natural_questions": {
-        "hf_id": "google/natural_questions",
+        "hf_id": "natural_questions",
         "config": None,
+        "split": "train",
+        "streaming": True,
         "max_samples": 500,
         "question_key": "question",
         "answer_key": "short_answers",
@@ -29,6 +31,7 @@ DATASETS = {
     "fever": {
         "hf_id": "fever",
         "config": "v1.0",
+        "split": "labelled_dev",
         "max_samples": 500,
         "question_key": "claim",
         "answer_key": "label",
@@ -58,12 +61,12 @@ MODELS = {
 # Models that run on CPU in reasonable time (small; use for --cpu)
 CPU_MODELS = ["gpt2", "distilgpt2"]
 
-# Project: exactly 5 models, 5 datasets (as per proposal)
+# Project: exactly 5 models, 5 datasets (aligned with report: GPT-2 + four 7B-class models)
 PROJECT_MODELS = [
+    "gpt2",
     "phi-2",
     "mistral-7b",
     "llama2-7b",
-    "gemma-7b",
     "qwen-7b",
 ]
 PROJECT_DATASETS = [
