@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Test dataset loading and config without running models. Run from project root."""
 import sys
 from pathlib import Path
 
