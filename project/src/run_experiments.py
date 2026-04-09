@@ -1,17 +1,3 @@
-"""
-Main script: benchmark models on QA datasets and record results.
-
-For each (model × dataset) we:
-  1. Load the dataset and model
-  2. Run the model on each question (zero-shot or few-shot)
-  3. Compare predictions to references and compute metrics
-  4. Save per-run JSON (metrics + metadata) and aggregate summary.json
-
-Usage:
-  python -m src.run_experiments --models phi-2 --datasets truthfulqa --max_samples 50
-  python -m src.run_experiments --all --max_samples 100
-"""
-
 import argparse
 import os
 from datetime import datetime
@@ -27,7 +13,7 @@ from .config import (
 )
 from .load_datasets import load_dataset_by_name, get_all_dataset_names
 from .load_models import load_model_and_tokenizer
-from .evaluate import run_evaluation, compute_accuracy, compute_hallucination_rate
+from .evaluate import run_evaluation
 from .utils import ensure_dir, save_json
 
 
@@ -41,23 +27,19 @@ def run_single_experiment(
     output_dir: str = RESULTS_DIR,
     verbose: bool = True,
 ) -> dict:
-    """Benchmark one model on one dataset: run inference, compute metrics, save results."""
     if verbose:
         print(f"\n{'='*60}")
         print(f"Model: {model_key} | Dataset: {dataset_name} | n={max_samples}" + (" [CPU]" if force_cpu else ""))
         print("="*60)
 
-    # Load dataset
     data = load_dataset_by_name(dataset_name, max_samples=max_samples)
     if not data:
         return {"error": f"No data loaded for {dataset_name}"}
 
-    # Load model (CPU mode skips 8-bit)
     model, tokenizer = load_model_and_tokenizer(
         model_key, use_8bit=use_8bit and not force_cpu, force_cpu=force_cpu
     )
 
-    # Evaluate
     results = run_evaluation(
         model, tokenizer, data,
         prompt_type=prompt_type,
@@ -65,13 +47,11 @@ def run_single_experiment(
         verbose=verbose,
     )
 
-    # Add metadata
     results["model"] = model_key
     results["dataset"] = dataset_name
     results["prompt_type"] = prompt_type
     results["timestamp"] = datetime.now().isoformat()
 
-    # Save
     out_dir = ensure_dir(output_dir)
     fname = f"{model_key}_{dataset_name}_{prompt_type}.json"
     out_path = os.path.join(str(out_dir), fname)
@@ -101,9 +81,8 @@ def main():
     parser.add_argument("--cpu", action="store_true", help="CPU only: use small models (gpt2, distilgpt2), no GPU")
     args = parser.parse_args()
 
-    # Resolve max_samples: --full => use config max per dataset; else default 50
     if args.full:
-        max_samples = None  # let load_dataset_by_name use config max (500)
+        max_samples = None
     else:
         max_samples = args.max_samples if args.max_samples is not None else 50
 
@@ -127,7 +106,6 @@ def main():
                 print(f"Skipping unknown dataset: {dataset_name}")
                 continue
             try:
-                # Per-dataset max when --full: use config max for this dataset
                 n = max_samples
                 if n is None:
                     n = DATASETS_CONFIG.get(dataset_name, {}).get("max_samples", 500)
@@ -145,7 +123,6 @@ def main():
                 print(f"Error {model_key} x {dataset_name}: {e}")
                 all_results.append({"model": model_key, "dataset": dataset_name, "error": str(e)})
 
-    # Summary: full benchmark record (all metrics per model × dataset)
     summary_path = os.path.join(args.output_dir, "summary.json")
     summary = []
     for r in all_results:
