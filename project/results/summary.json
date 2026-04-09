@@ -1,9 +1,0 @@
-[
-  {
-    "model": "gpt2",
-    "dataset": "truthfulqa",
-    "accuracy_contain": 0.006,
-    "hallucination_rate": 0.994,
-    "error": null
-  }
-]
