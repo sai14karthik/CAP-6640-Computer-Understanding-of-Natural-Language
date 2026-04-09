@@ -1,7 +1,3 @@
-"""
-CAP 6640 Project: Hallucination Detection and Measurement in Large Language Models.
-"""
-
 from .config import DATASETS, MODELS, DEFAULT_MODELS, DEFAULT_DATASETS
 from .load_datasets import load_dataset_by_name, get_all_dataset_names
 from .load_models import load_model_and_tokenizer, generate_answer
