@@ -12,8 +12,10 @@
 *.toc
 *.xdv
 
-# Compiled documents (optional: remove next line if you want PDFs in the repo)
+# PDFs & plain text (exports, notes, transcripts, scratch)
 *.pdf
+*.txt
+!**/requirements.txt
 
 # macOS
 .DS_Store
